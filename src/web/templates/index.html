@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arbitragem BRL → ARS</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f5f3;
+      --surface: #ffffff;
+      --surface2: #f1efea;
+      --border: rgba(0,0,0,0.1);
+      --border2: rgba(0,0,0,0.18);
+      --text: #1a1a1a;
+      --text2: #5f5e5a;
+      --text3: #888780;
+      --green: #3B6D11; --green-bg: #EAF3DE; --green-border: #C0DD97;
+      --amber: #854F0B; --amber-bg: #FAEEDA;
+      --blue: #185FA5;  --blue-bg: #E6F1FB;
+      --red: #A32D2D;
+      --radius: 8px; --radius-lg: 12px;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .page { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* topbar */
+    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 12px; }
+    .topbar h1 { font-size: 20px; font-weight: 500; }
+    .topbar p  { font-size: 13px; color: var(--text2); margin-top: 3px; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .badge-live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 5px 12px; border-radius: 99px; background: var(--green-bg); color: var(--green); border: 0.5px solid var(--green-border); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+    .btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 7px 14px; border-radius: var(--radius); border: 0.5px solid var(--border2); color: var(--text2); background: var(--surface); cursor: pointer; transition: background .15s; }
+    .btn:hover { background: var(--surface2); }
+
+    /* summary */
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+    .metric { background: var(--surface2); border-radius: var(--radius); padding: 12px 14px; }
+    .metric-label { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+    .metric-value { font-size: 20px; font-weight: 500; }
+    .metric-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+    /* section label */
+    .sec { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: var(--text3); margin-bottom: 10px; }
+
+    /* calculadora */
+    .calc-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+    .calc-top { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; flex-wrap: wrap; }
+    .calc-top label { font-size: 14px; color: var(--text2); white-space: nowrap; }
+    .input-wrap { display: flex; align-items: center; border: 0.5px solid var(--border2); border-radius: var(--radius); overflow: hidden; }
+    .input-prefix { padding: 0 10px; font-size: 14px; color: var(--text2); background: var(--surface2); height: 38px; display: flex; align-items: center; border-right: 0.5px solid var(--border2); }
+    .input-wrap input { border: none; outline: none; padding: 0 12px; font-size: 15px; font-weight: 500; width: 130px; height: 38px; background: transparent; color: var(--text); font-family: inherit; }
+    .calc-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+    .calc-result { border-radius: var(--radius); padding: 12px 14px; border: 0.5px solid var(--border); }
+    .calc-result.winner { background: var(--green-bg); border-color: var(--green-border); }
+    .calc-result-label { font-size: 12px; color: var(--text2); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+    .calc-result.winner .calc-result-label { color: var(--green); }
+    .calc-result-value { font-size: 20px; font-weight: 500; }
+    .calc-result.winner .calc-result-value { color: #27500A; }
+    .calc-result-diff { font-size: 12px; color: var(--text3); margin-top: 3px; }
+    .calc-result.winner .calc-result-diff { color: var(--green); }
+    .best-pill { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: var(--green-border); color: var(--green); margin-left: 4px; }
+
+    /* rotas */
+    .routes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+    .route-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+    .route-card.best { border: 2px solid var(--green); }
+    .route-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .route-icon { width: 32px; height: 32px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .route-name { font-size: 14px; font-weight: 500; }
+    .route-sub  { font-size: 12px; color: var(--text2); }
+    .route-badge { margin-left: auto; font-size: 11px; padding: 3px 8px; border-radius: 99px; background: var(--green-bg); color: var(--green); }
+    .route-flow { display: flex; align-items: center; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
+    .flow-step { font-size: 12px; padding: 3px 8px; border-radius: 99px; background: var(--surface2); color: var(--text2); }
+    .flow-arrow { font-size: 11px; color: var(--text3); }
+    .route-result { border-top: 0.5px solid var(--border); padding-top: 10px; }
+    .result-label { font-size: 12px; color: var(--text2); }
+    .result-value { font-size: 22px; font-weight: 500; margin: 2px 0; }
+    .result-gain { font-size: 12px; color: var(--green); }
+    .result-ref  { font-size: 12px; color: var(--text3); }
+
+    /* chart */
+    .chart-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+    .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px; }
+    .chart-title { font-size: 14px; font-weight: 500; }
+    .chart-legend { display: flex; gap: 12px; }
+    .leg { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2); }
+    .leg-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .chart-area { height: 140px; display: flex; align-items: flex-end; gap: 5px; border-bottom: 0.5px solid var(--border); }
+    .bar-group { flex: 1; display: flex; gap: 2px; align-items: flex-end; }
+    .bar { border-radius: 2px 2px 0 0; min-height: 4px; flex: 1; }
+    .chart-x { display: flex; gap: 5px; margin-top: 6px; }
+    .x-lbl { flex: 1; font-size: 11px; color: var(--text3); text-align: center; }
+
+    /* history */
+    .history-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+    .history-row { display: grid; grid-template-columns: 80px 1fr 1fr 1fr 80px; gap: 8px; padding: 8px 0; border-bottom: 0.5px solid var(--border); align-items: center; font-size: 13px; }
+    .history-row:last-child { border-bottom: none; }
+    .history-row.head { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .04em; }
+    .winner-pill { font-size: 11px; padding: 2px 8px; border-radius: 99px; background: var(--green-bg); color: var(--green); }
+    .time-col { color: var(--text2); }
+
+    /* error */
+    .error-box { background: #FCEBEB; border: 0.5px solid #F09595; border-radius: var(--radius); padding: 12px 16px; font-size: 14px; color: #A32D2D; margin-bottom: 1.5rem; }
+
+    @media (max-width: 500px) {
+      .history-row { grid-template-columns: 60px 1fr 1fr 60px; }
+      .history-row .btc-col { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar">
+    <div>
+      <h1>Arbitragem BRL → ARS</h1>
+      <p id="updated-at">Carregando...</p>
+    </div>
+    <div class="topbar-right">
+      <span class="badge-live"><span class="dot"></span>ao vivo</span>
+      <button class="btn" onclick="refreshRates()">↻ Atualizar</button>
+    </div>
+  </div>
+
+  <div id="error-box" class="error-box" style="display:none">
+    Não foi possível buscar as cotações. Verifique sua conexão e tente novamente.
+  </div>
+
+  <div class="summary-grid">
+    <div class="metric"><div class="metric-label">Melhor rota agora</div><div class="metric-value" id="s-best">—</div><div class="metric-sub" id="s-best-gain">—</div></div>
+    <div class="metric"><div class="metric-label">R$ 1,00 vale hoje</div><div class="metric-value" id="s-rate">—</div><div class="metric-sub" id="s-rate-via">—</div></div>
+    <div class="metric"><div class="metric-label">USDT / BRL agora</div><div class="metric-value" id="s-usdt">—</div><div class="metric-sub">Binance spot</div></div>
+    <div class="metric"><div class="metric-label">Dólar blue ARS</div><div class="metric-value" id="s-blue">—</div><div class="metric-sub">por 1 USD</div></div>
+  </div>
+
+  <div class="sec">calculadora de conversão</div>
+  <div class="calc-card">
+    <div class="calc-top">
+      <label for="calc-input">Quanto você quer converter?</label>
+      <div class="input-wrap">
+        <span class="input-prefix">R$</span>
+        <input type="number" id="calc-input" value="100" min="1" step="1">
+      </div>
+    </div>
+    <div class="calc-results">
+      <div class="calc-result winner" id="cr-usdt">
+        <div class="calc-result-label">Via USDT <span class="best-pill" id="pill-usdt">melhor</span></div>
+        <div class="calc-result-value" id="cv-usdt">—</div>
+        <div class="calc-result-diff" id="cd-usdt">—</div>
+      </div>
+      <div class="calc-result" id="cr-btc">
+        <div class="calc-result-label">Via Bitcoin <span class="best-pill" id="pill-btc" style="display:none">melhor</span></div>
+        <div class="calc-result-value" id="cv-btc">—</div>
+        <div class="calc-result-diff" id="cd-btc">—</div>
+      </div>
+      <div class="calc-result" id="cr-direto">
+        <div class="calc-result-label">Câmbio direto <span class="best-pill" id="pill-direto" style="display:none">melhor</span></div>
+        <div class="calc-result-value" id="cv-direto">—</div>
+        <div class="calc-result-diff">referência</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">rotas de conversão — detalhamento</div>
+  <div class="routes-grid">
+    <div class="route-card best" id="rc-usdt">
+      <div class="route-header">
+        <div class="route-icon" style="background:var(--green-bg)">💵</div>
+        <div><div class="route-name">Via USDT</div><div class="route-sub">Tether</div></div>
+        <span class="route-badge" id="rb-usdt">melhor</span>
+      </div>
+      <div class="route-flow">
+        <span class="flow-step" id="rf-brl-usdt">R$ 100</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step" id="rf-usdt-amt">— USDT</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">ARS</span>
+      </div>
+      <div class="route-result">
+        <div class="result-label">você recebe</div>
+        <div class="result-value" id="rv-usdt">—</div>
+        <div class="result-gain" id="rg-usdt">—</div>
+      </div>
+    </div>
+    <div class="route-card" id="rc-btc">
+      <div class="route-header">
+        <div class="route-icon" style="background:var(--amber-bg)">₿</div>
+        <div><div class="route-name">Via Bitcoin</div><div class="route-sub">BTC</div></div>
+        <span class="route-badge" id="rb-btc" style="display:none">melhor</span>
+      </div>
+      <div class="route-flow">
+        <span class="flow-step" id="rf-brl-btc">R$ 100</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step" id="rf-btc-amt">— BTC</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">ARS</span>
+      </div>
+      <div class="route-result">
+        <div class="result-label">você recebe</div>
+        <div class="result-value" id="rv-btc">—</div>
+        <div class="result-gain" id="rg-btc">—</div>
+      </div>
+    </div>
+    <div class="route-card" id="rc-direto">
+      <div class="route-header">
+        <div class="route-icon" style="background:var(--blue-bg)">⇄</div>
+        <div><div class="route-name">Câmbio direto</div><div class="route-sub">BRL → ARS oficial</div></div>
+        <span class="route-badge" id="rb-direto" style="display:none">melhor</span>
+      </div>
+      <div class="route-flow">
+        <span class="flow-step" id="rf-brl-direto">R$ 100</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">direto</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step">ARS</span>
+      </div>
+      <div class="route-result">
+        <div class="result-label">você recebe</div>
+        <div class="result-value" id="rv-direto">—</div>
+        <div class="result-ref">referência</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-header">
+      <span class="chart-title">Evolução hoje — ARS por R$ 100</span>
+      <div class="chart-legend">
+        <span class="leg"><span class="leg-dot" style="background:var(--green)"></span>USDT</span>
+        <span class="leg"><span class="leg-dot" style="background:#BA7517"></span>BTC</span>
+        <span class="leg"><span class="leg-dot" style="background:var(--blue)"></span>Direto</span>
+      </div>
+    </div>
+    <div class="chart-area" id="chart"></div>
+    <div class="chart-x" id="chart-x"></div>
+  </div>
+
+  <div class="history-card">
+    <div style="margin-bottom:1rem"><span class="sec" style="margin:0">histórico de hoje</span></div>
+    <div class="history-row head">
+      <span>horário</span><span>via USDT</span><span class="btc-col">via BTC</span><span>direto</span><span>melhor</span>
+    </div>
+    <div id="history-body">
+      <div style="padding:12px 0;font-size:13px;color:var(--text3)">Carregando histórico...</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let _rates = null;
+
+function fmtARS(n){ return Math.round(n).toLocaleString('pt-BR') + ' ARS'; }
+function fmtBRL(n){ return 'R$ ' + parseFloat(n).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+function applyData(data){
+  _rates = data.rates;
+  const r = data.results;
+  const best = data.best_route;
+  const amount = parseFloat(document.getElementById('calc-input').value) || 100;
+
+  // topbar
+  const ts = new Date(data.timestamp);
+  document.getElementById('updated-at').textContent = 'Atualizado às ' + ts.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+
+  // summary
+  const bestLabel = {usdt:'via USDT', btc:'via Bitcoin', direto:'câmbio direto'};
+  document.getElementById('s-best').textContent = bestLabel[best] || '—';
+  const bestVal = data.rate_per_brl[best];
+  document.getElementById('s-rate').textContent = bestVal.toFixed(2) + ' ARS';
+  document.getElementById('s-rate-via').textContent = bestLabel[best];
+  document.getElementById('s-usdt').textContent = 'R$ ' + parseFloat(data.rates.usdt_brl).toFixed(2);
+  document.getElementById('s-blue').textContent = '$ ' + Math.round(data.rates.blue_usd_ars).toLocaleString('pt-BR');
+
+  const gain_pct_usdt = ((r.via_usdt - r.direto) / r.direto * 100).toFixed(1);
+  const gain_pct_btc  = ((r.via_btc  - r.direto) / r.direto * 100).toFixed(1);
+  document.getElementById('s-best-gain').textContent = '+' + (best === 'usdt' ? gain_pct_usdt : gain_pct_btc) + '% vs câmbio direto';
+
+  // calculadora
+  updateCalc(data);
+
+  // rotas
+  const brlFmt = fmtBRL(amount);
+  const usdtAmt = (amount / data.rates.usdt_brl).toFixed(4);
+  const btcAmt  = (amount / data.rates.btc_brl).toFixed(8);
+
+  document.getElementById('rf-brl-usdt').textContent = brlFmt;
+  document.getElementById('rf-brl-btc').textContent  = brlFmt;
+  document.getElementById('rf-brl-direto').textContent = brlFmt;
+  document.getElementById('rf-usdt-amt').textContent = usdtAmt + ' USDT';
+  document.getElementById('rf-btc-amt').textContent  = btcAmt + ' BTC';
+
+  document.getElementById('rv-usdt').textContent = fmtARS(r.via_usdt);
+  document.getElementById('rv-btc').textContent  = fmtARS(r.via_btc);
+  document.getElementById('rv-direto').textContent = fmtARS(r.direto);
+
+  document.getElementById('rg-usdt').textContent = '+' + gain_pct_usdt + '% vs câmbio direto';
+  document.getElementById('rg-btc').textContent  = '+' + gain_pct_btc  + '% vs câmbio direto';
+
+  // destaque melhor rota
+  ['usdt','btc','direto'].forEach(k => {
+    document.getElementById('rc-' + k).className = 'route-card' + (k === best ? ' best' : '');
+    document.getElementById('rb-' + k).style.display = k === best ? '' : 'none';
+  });
+
+  document.getElementById('error-box').style.display = 'none';
+}
+
+function updateCalc(data){
+  const amount = parseFloat(document.getElementById('calc-input').value) || 0;
+  const scale  = amount / 100;
+  const r = data.results;
+  const u = r.via_usdt * scale;
+  const b = r.via_btc  * scale;
+  const d = r.direto   * scale;
+  const best = data.best_route;
+
+  document.getElementById('cv-usdt').textContent = fmtARS(u);
+  document.getElementById('cv-btc').textContent  = fmtARS(b);
+  document.getElementById('cv-direto').textContent = fmtARS(d);
+  document.getElementById('cd-usdt').textContent = '+' + Math.round(u - d).toLocaleString('pt-BR') + ' vs câmbio direto';
+  document.getElementById('cd-btc').textContent  = '+' + Math.round(b - d).toLocaleString('pt-BR') + ' vs câmbio direto';
+
+  ['usdt','btc','direto'].forEach(k => {
+    document.getElementById('cr-' + k).className = 'calc-result' + (k === best ? ' winner' : '');
+    document.getElementById('pill-' + k).style.display = k === best ? '' : 'none';
+  });
+}
+
+async function refreshRates(){
+  const amount = parseFloat(document.getElementById('calc-input').value) || 100;
+  try {
+    const res  = await fetch('/api/rates?amount=' + amount);
+    const data = await res.json();
+    if(data.error){ document.getElementById('error-box').style.display = ''; return; }
+    applyData(data);
+    loadHistory();
+  } catch(e){
+    document.getElementById('error-box').style.display = '';
+  }
+}
+
+async function loadHistory(){
+  try {
+    const res  = await fetch('/api/history');
+    const data = await res.json();
+    const body = document.getElementById('history-body');
+    if(!data.length){
+      body.innerHTML = '<div style="padding:12px 0;font-size:13px;color:var(--text3)">Nenhum registro hoje ainda.</div>';
+      return;
+    }
+    const rows = [...data].reverse().slice(0, 10).map(d => {
+      const ts = new Date(d.timestamp).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+      const best = d.best_route;
+      const label = {usdt:'USDT', btc:'BTC', direto:'Direto'};
+      return `<div class="history-row">
+        <span class="time-col">${ts}</span>
+        <span>${Math.round(d.results.via_usdt).toLocaleString('pt-BR')}</span>
+        <span class="btc-col">${Math.round(d.results.via_btc).toLocaleString('pt-BR')}</span>
+        <span>${Math.round(d.results.direto).toLocaleString('pt-BR')}</span>
+        <span><span class="winner-pill">${label[best]}</span></span>
+      </div>`;
+    }).join('');
+    body.innerHTML = rows;
+    renderChart(data);
+  } catch(e){}
+}
+
+function renderChart(history){
+  const chart = document.getElementById('chart');
+  const xaxis = document.getElementById('chart-x');
+  chart.innerHTML = ''; xaxis.innerHTML = '';
+
+  const slice = history.slice(-8);
+  const usdt  = slice.map(d => d.results.via_usdt);
+  const btc   = slice.map(d => d.results.via_btc);
+  const dir   = slice.map(d => d.results.direto);
+  const all   = [...usdt, ...btc, ...dir];
+  const minV  = Math.min(...all) - 200;
+  const maxV  = Math.max(...all) + 200;
+  const range = maxV - minV;
+  const H = 140;
+
+  slice.forEach((d, i) => {
+    const grp = document.createElement('div');
+    grp.className = 'bar-group';
+    [[usdt[i],'#3B6D11'],[btc[i],'#BA7517'],[dir[i],'#185FA5']].forEach(([v,c]) => {
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      bar.style.cssText = `background:${c};height:${Math.round((v-minV)/range*H)}px;opacity:0.85`;
+      grp.appendChild(bar);
+    });
+    chart.appendChild(grp);
+
+    const ts = new Date(d.timestamp).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+    const lbl = document.createElement('div');
+    lbl.className = 'x-lbl';
+    lbl.textContent = ts;
+    xaxis.appendChild(lbl);
+  });
+}
+
+// input da calculadora — recalcula sem chamar API
+document.getElementById('calc-input').addEventListener('input', () => {
+  if(!_rates) return;
+  fetch('/api/calculate?amount=' + (parseFloat(document.getElementById('calc-input').value) || 100))
+    .then(r => r.json()).then(data => {
+      updateCalc(data);
+      const brlFmt = fmtBRL(parseFloat(document.getElementById('calc-input').value));
+      ['usdt','btc','direto'].forEach(k => {
+        document.getElementById('rf-brl-' + k).textContent = brlFmt;
+      });
+      document.getElementById('rf-usdt-amt').textContent = (parseFloat(document.getElementById('calc-input').value) / _rates.usdt_brl).toFixed(4) + ' USDT';
+      document.getElementById('rf-btc-amt').textContent  = (parseFloat(document.getElementById('calc-input').value) / _rates.btc_brl).toFixed(8) + ' BTC';
+    });
+});
+
+// inicializa com dados do Flask
+const INITIAL = {{ data | tojson }};
+if(INITIAL) applyData(INITIAL);
+loadHistory();
+</script>
+</body>
+</html>
