@@ -1,24 +1,17 @@
 import requests
 from config.settings import BLUELYTICS_URL, EXCHANGERATE_URL
 
-COINGECKO_URL = "https://api.coingecko.com/api/v3/simple/price"
+AWESOMEAPI_URL = "https://economia.awesomeapi.com.br/json/last/USD-BRL,BTC-BRL,USDT-BRL"
 
 
-def get_coingecko_prices() -> dict:
-    """Retorna preços de USDT e BTC em BRL via CoinGecko."""
-    response = requests.get(
-        COINGECKO_URL,
-        params={
-            "ids": "tether,bitcoin",
-            "vs_currencies": "brl"
-        },
-        timeout=10
-    )
+def get_awesomeapi_prices() -> dict:
+    """Retorna preços de USDT e BTC em BRL via AwesomeAPI."""
+    response = requests.get(AWESOMEAPI_URL, timeout=10)
     response.raise_for_status()
     data = response.json()
     return {
-        "usdt_brl": float(data["tether"]["brl"]),
-        "btc_brl":  float(data["bitcoin"]["brl"]),
+        "usdt_brl": float(data["USDTBRL"]["bid"]),
+        "btc_brl":  float(data["BTCBRL"]["bid"]),
     }
 
 
@@ -41,7 +34,7 @@ def get_direct_brl_ars() -> float:
 
 def fetch_all_rates() -> dict:
     try:
-        prices         = get_coingecko_prices()
+        prices         = get_awesomeapi_prices()
         blue_usd_ars   = get_blue_usd_ars()
         direct_brl_ars = get_direct_brl_ars()
 
