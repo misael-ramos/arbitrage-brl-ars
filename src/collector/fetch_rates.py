@@ -5,13 +5,18 @@ AWESOMEAPI_URL = "https://economia.awesomeapi.com.br/json/last/USD-BRL,BTC-BRL,U
 
 
 def get_awesomeapi_prices() -> dict:
-    """Retorna preços de USDT e BTC em BRL via AwesomeAPI."""
     response = requests.get(AWESOMEAPI_URL, timeout=10)
+
+    print("STATUS AWESOME:", response.status_code)
+    print("BODY AWESOME:", response.text[:500])
+
     response.raise_for_status()
+
     data = response.json()
+
     return {
         "usdt_brl": float(data["USDTBRL"]["bid"]),
-        "btc_brl":  float(data["BTCBRL"]["bid"]),
+        "btc_brl": float(data["BTCBRL"]["bid"]),
     }
 
 

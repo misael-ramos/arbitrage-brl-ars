@@ -7,10 +7,20 @@ from src.storage.save_history import save_to_s3, load_today_history
 
 app = Flask(__name__)
 
-# cache com TTL de 5 minutos
+# cache com TTL de 20 minutos
 _cache = {"data": None, "fetched_at": 0}
-CACHE_TTL = 300  # segundos
+CACHE_TTL = 1200
 
+# popula o cache na inicialização
+import time
+print("Inicializando cache...")
+_rates = fetch_all_rates()
+if _rates:
+    _cache["data"] = calculate_routes(_rates, 100.0)
+    _cache["fetched_at"] = time.time()
+    print("Cache inicializado com sucesso.")
+else:
+    print("Falha ao inicializar cache.")
 
 def get_fresh_data(amount_brl: float = 100.0) -> dict:
     now = time.time()
