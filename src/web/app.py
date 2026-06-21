@@ -30,7 +30,9 @@ def get_fresh_data(amount_brl: float = 100.0) -> dict:
 @app.route("/")
 def index():
     data = get_fresh_data(100.0)
+    print("DEBUG data:", data)
     data_json = json.dumps(data) if data else "null"
+    print("DEBUG data_json:", data_json[:100] if data_json else "null")
     return render_template("index.html", data_json=data_json)
 
 

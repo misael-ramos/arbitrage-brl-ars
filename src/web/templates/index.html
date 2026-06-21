@@ -418,7 +418,7 @@ document.getElementById('calc-input').addEventListener('input', () => {
 });
 
 // inicializa com dados do Flask
-const INITIAL = {{ data | tojson }};
+const INITIAL = {{ data_json | safe }};
 if(INITIAL) applyData(INITIAL);
 loadHistory();
 </script>
